@@ -47,7 +47,7 @@ def caesar_cipher_decrypter(ciphertext, shift):
 def caesar_cipher_cracker(ciphertext):
     ciphertext = list(ciphertext.upper())
     lst = []
-    for shift in range(0, 25):
+    for shift in range(1, 26):
         plaintext = []
         for x in range(len(ciphertext)):
             char_code = ord(ciphertext[x])
@@ -59,7 +59,7 @@ def caesar_cipher_cracker(ciphertext):
             else:
                 char_code = char_code - shift
             plaintext.append(chr(char_code))
-        lst.append(''.join(plaintext) + ' (shift = ' + str(shift) + ')')
+        lst.append(''.join(plaintext) + ' (shift = %d)' % shift)
     return lst
 
 
@@ -72,20 +72,21 @@ class InputTypes:
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='pyciph', usage='%(prog)s [procedure] [cipher]',
-                                     description='a Python script capable of decryption, encryption and cracking', )
+    parser = argparse.ArgumentParser(prog='pyciph', description='a Python script capable of decryption, encryption and cracking', )
     subparsers = parser.add_subparsers(title='procedures', dest='command', )
     # command: decrypt
     parser_decrypt = subparsers.add_parser('decrypt', help='decrypt the given ciphertext', )
     parser_decrypt.add_argument('-c', metavar=('CIPHERTEXT', 'SHIFT'), type=InputTypes.str_int, nargs=2,
-                                help='use the Caesar cipher with given shift', required=True, )
+                                help='use the Caesar cipher with given shift', )
+    parser_decrypt.add_argument('-r', metavar='CIPHERTEXT', type=str, help='use the ROT13 cipher', )
     # command: encrypt
     parser_encrypt = subparsers.add_parser('encrypt', help='encrypt the given plaintext', )
     parser_encrypt.add_argument('-c', metavar=('PLAINTEXT', 'SHIFT'), type=InputTypes.str_int, nargs=2,
-                                help='use the Caesar cipher with given shift', required=True, )
+                                help='use the Caesar cipher with given shift', )
+    parser_encrypt.add_argument('-r', metavar='PLAINTEXT', type=str, help='use the ROT13 cipher', )
     # command: crack
     parser_crack = subparsers.add_parser('crack', help='crack the cipher')
-    parser_crack.add_argument('-c', type=str, help='use the Caesar cipher', required=True, )
+    parser_crack.add_argument('-c', type=str, help='use the Caesar cipher', )
 
     # parse arguments
     args = parser.parse_args()
@@ -97,14 +98,24 @@ def main():
     if args.command == 'decrypt':
         if args.c:
             print(caesar_cipher_decrypter(args.c[0], args.c[1]))
+        elif args.r:
+            print(caesar_cipher_decrypter(args.r, 13))
+        else:
+            parser.parse_args(['decrypt', '-h'])
     elif args.command == 'encrypt':
         if args.c:
             print(caesar_cipher_encryptor(args.c[0], args.c[1]))
+        elif args.r:
+            print(caesar_cipher_encryptor(args.r, 13))
+        else:
+            parser.parse_args(['encrypt', '-h'])
     elif args.command == 'crack':
         if args.c:
             lst = caesar_cipher_cracker(args.c)
             for x in range(0, 25):
                 print(lst[x])
+        else:
+            parser.parse_args(['crack', '-h'])
 
 
 if __name__ == '__main__':
