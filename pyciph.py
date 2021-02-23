@@ -1,13 +1,12 @@
-import argparse, sys
+import argparse
+import sys
 
 # generate ASCII table range
 ascii_char_range = [i for i in range(65,91)]
-
 # generate ASCII code to letter dictionary
-# dict_ascii_codes = {i : chr(i) for i in ascii_char_range}
-
+dict_code_to_letter = {i - 64: chr(i) for i in ascii_char_range}
 # generate ASCII letter to code dictionary
-# dict_ascii_letters = {chr(i) : i for i in ascii_char_range}
+dict_letter_to_code = {chr(i): i - 64 for i in ascii_char_range}
 
 
 def caesar_cipher_encryptor(plaintext, shift):
@@ -15,16 +14,18 @@ def caesar_cipher_encryptor(plaintext, shift):
     ciphertext = []
     shift = shift % 26
     for x in range(len(plaintext)):
-        char_code = ord(plaintext[x])
-        if char_code not in ascii_char_range:
-            ciphertext.append(chr(char_code))
+        if ord(plaintext[x]) not in ascii_char_range:
+            ciphertext.append(plaintext[x])
             continue
-        elif char_code + shift > ascii_char_range[-1]:
-            char_code = ascii_char_range[0] + (char_code + shift) - ascii_char_range[-1]-1
-        else:
-            char_code = char_code + shift
-        ciphertext.append(chr(char_code))
-    return ''.join(ciphertext)
+        char_code = ord(plaintext[x]) - ascii_char_range[0]+1
+        char_code = char_code + shift
+        while True:
+            if char_code > 26:
+                char_code = char_code % 26
+            else:
+                break
+        ciphertext.append(dict_code_to_letter[char_code])
+    return ''.join(ciphertext).lower()
 
 
 def caesar_cipher_decrypter(ciphertext, shift):
@@ -32,16 +33,18 @@ def caesar_cipher_decrypter(ciphertext, shift):
     plaintext = []
     shift = shift % 26
     for x in range(len(ciphertext)):
-        char_code = ord(ciphertext[x])
-        if char_code not in ascii_char_range:
-            plaintext.append(chr(char_code))
+        if ord(ciphertext[x]) not in ascii_char_range:
+            plaintext.append(ciphertext[x])
             continue
-        elif char_code - shift < ascii_char_range[0]:
-            char_code = ascii_char_range[-1]+1 - shift + char_code - ascii_char_range[0]
-        else:
-            char_code = char_code - shift
-        plaintext.append(chr(char_code))
-    return ''.join(plaintext)
+        char_code = ord(ciphertext[x]) - ascii_char_range[0]+1
+        char_code = 26 + char_code - shift
+        while True:
+            if char_code > 26:
+                char_code = char_code % 26
+            else:
+                break
+        plaintext.append(dict_code_to_letter[char_code])
+    return ''.join(plaintext).lower()
 
 
 def caesar_cipher_cracker(ciphertext):
