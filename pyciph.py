@@ -149,6 +149,41 @@ def caesar_cipher_decrypter(ciphertext, shift):
     return ''.join(plaintext)
 
 
+def vigenere_cipher_encoder(plaintext, key):
+    # format the key
+    key = key.lower().strip()
+    # check, if key contains any char that IS NOT a letter. If so, break the process and return error
+    for x in range(len(key)):
+        if ord(key[x]) not in ascii_char_range:
+            print("ERROR")
+            return None
+    ciphertext = []
+    k = 0
+    for x in range(len(plaintext)):
+        # check if char is uppercase
+        upper = False
+        if plaintext[x].isupper():
+            upper = True
+        # check if the char is letter
+        elif ord(plaintext[x]) not in ascii_char_range:
+            ciphertext.append(plaintext[x])
+            continue
+        # calculate the shift
+        n = dict_letter_to_code[plaintext[x].lower()] - 1
+        # obtain the encrypted letter by using Caesar cipher with calculated shift
+        letter = caesar_cipher_encryptor(key[k], n)
+        # if input letter was uppercase, restore it's original case
+        if upper:
+            letter = letter.upper()
+        # append the encrypted letter to the list
+        ciphertext.append(letter)
+        # loop the key
+        k += 1
+        if k == len(key):
+            k = 0
+    return ''.join(ciphertext)
+
+
 def rail_fence_cipher_encryptor(plaintext, n):
     plaintext = plaintext.lower()
     # create matrix where the plaintext will be placed
@@ -189,6 +224,7 @@ class InputTypes:
 
 def main():
     parser = argparse.ArgumentParser(prog='pyciph', description='pyciph - commandline tool for encryption and decryption with classical ciphers', )
+    # global flags
     parser.add_argument('-q', '--quiet', action='store_true', help='pyciph will return only the output string')
     parser.add_argument('-v', '--verbose', action='store_true', help='pyciph will return more information about the process')
     subparsers = parser.add_subparsers(title='procedures', dest='command', )
@@ -211,6 +247,8 @@ def main():
                                 help='use the Atbash cipher (affine cipher with a=25, b=25)', )
     parser_encrypt.add_argument('--caesar', metavar=('PLAINTEXT', 'SHIFT'), type=InputTypes.extract_str, nargs=2,
                                 help='use the Caesar cipher with given shift', )
+    parser_encrypt.add_argument('--vigenere', metavar=('PLAINTEXT', 'KEY'), type=str, nargs=2,
+                                help='use the Vigenere cipher with given key')
     parser_encrypt.add_argument('--rail-fence', metavar=('PLAINTEXT', 'n'), type=InputTypes.extract_str, nargs=2,
                                 help='use Rail Fence cipher with given height of the matrix')
     parser_encrypt.add_argument('--rot13', metavar='PLAINTEXT', type=str,
@@ -297,6 +335,16 @@ def main():
                 print('Ciphertext: %s' % caesar_cipher_encryptor(args.caesar[0], args.caesar[1]))
             else:
                 print(caesar_cipher_encryptor(args.caesar[0], args.caesar[1]))
+        elif args.vigenere:
+            if not args.quiet:
+                print('Using Vigenere cipher')
+                if args.verbose:
+                    print('Verbose - nothing more to show')
+                print('Key: %s' % args.vigenere[1])
+                print('Plaintext: %s\n' % args.vigenere[0])
+                print('Ciphertext: %s' % vigenere_cipher_encoder(args.vigenere[0], args.vigenere[1]))
+            else:
+                print(vigenere_cipher_encoder(args.vigenere[0], args.vigenere[1]))
         elif args.rail_fence:
             output = rail_fence_cipher_encryptor(args.rail_fence[0], args.rail_fence[1])
             cipher = output[0]
@@ -327,3 +375,6 @@ def main():
 if __name__ == '__main__':
     main()
 
+# TODO
+# - vigenere cipher decrypter
+# - rail fence cipher decrypter
