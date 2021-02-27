@@ -5,11 +5,10 @@ Available ciphers:
 - Affine cipher,
 - Atbash cipher,
 - Caesar cipher,
-- Vigenere cipher (encryptor only),
+- Vigenere cipher,
 - Rail Fence cipher (encryptor only),
 - ROT13 cipher.
 
 In progress:
 
-- Vigenere cipher decrypter,
 - Rail Fence cipher decrypter.

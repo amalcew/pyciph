@@ -149,7 +149,7 @@ def caesar_cipher_decrypter(ciphertext, shift):
     return ''.join(plaintext)
 
 
-def vigenere_cipher_encoder(plaintext, key):
+def vigenere_cipher_encryptor(plaintext, key):
     # format the key
     key = key.lower().strip()
     # check, if key contains any char that IS NOT a letter. If so, break the process and return error
@@ -182,6 +182,41 @@ def vigenere_cipher_encoder(plaintext, key):
         if k == len(key):
             k = 0
     return ''.join(ciphertext)
+
+
+def vigenere_cipher_decrypter(ciphertext, key):
+    # format the key
+    key = key.lower().strip()
+    # check, if key contains any char that IS NOT a letter. If so, break the process and return error
+    for x in range(len(key)):
+        if ord(key[x]) not in ascii_char_range:
+            print("ERROR")
+            return None
+    plaintext = []
+    k = 0
+    for x in range(len(ciphertext)):
+        # check if char is uppercase
+        upper = False
+        if ciphertext[x].isupper():
+            upper = True
+        # check if the char is letter
+        elif ord(ciphertext[x]) not in ascii_char_range:
+            plaintext.append(ciphertext[x])
+            continue
+        # calculate the shift
+        n = dict_letter_to_code[key[k]] - 1
+        # obtain the decrypted letter by using Caesar cipher with calculated shift
+        letter = caesar_cipher_decrypter(ciphertext[x], n)
+        # if input letter was uppercase, restore it's original case
+        if upper:
+            letter = letter.upper()
+        # append the decrypted letter to the list
+        plaintext.append(letter)
+        # loop the key
+        k += 1
+        if k == len(key):
+            k = 0
+    return ''.join(plaintext)
 
 
 def rail_fence_cipher_encryptor(plaintext, n):
@@ -229,16 +264,6 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help='pyciph will return more information about the process')
     subparsers = parser.add_subparsers(title='procedures', dest='command', )
 
-    # procedure: decrypt
-    parser_decrypt = subparsers.add_parser('decrypt', help='decrypt the given ciphertext', )
-    parser_decrypt.add_argument('--affine', metavar=('PLAINTEXT', 'a', 'b'), type=InputTypes.extract_str, nargs=3,
-                                help='use the Affine cipher (linear function)', )
-    parser_decrypt.add_argument('--atbash', metavar=('CIPHERTEXT'), type=str,
-                                help='use the Atbash cipher (affine cipher with a=25, b=25)', )
-    parser_decrypt.add_argument('--caesar', metavar=('CIPHERTEXT', 'SHIFT'), type=InputTypes.extract_str, nargs=2,
-                                help='use the Caesar cipher with given shift', )
-    parser_decrypt.add_argument('--rot13', metavar='CIPHERTEXT', type=str,
-                                help='use the ROT13 cipher (Caesar cipher with shift = 13)', )
     # procedure: encrypt
     parser_encrypt = subparsers.add_parser('encrypt', help='encrypt the given plaintext', )
     parser_encrypt.add_argument('--affine', metavar=('PLAINTEXT', 'a', 'b'), type=InputTypes.extract_str, nargs=3,
@@ -254,58 +279,27 @@ def main():
     parser_encrypt.add_argument('--rot13', metavar='PLAINTEXT', type=str,
                                 help='use the ROT13 cipher (Caesar cipher with shift = 13)', )
 
+    # procedure: decrypt
+    parser_decrypt = subparsers.add_parser('decrypt', help='decrypt the given ciphertext', )
+    parser_decrypt.add_argument('--affine', metavar=('PLAINTEXT', 'a', 'b'), type=InputTypes.extract_str, nargs=3,
+                                help='use the Affine cipher (linear function)', )
+    parser_decrypt.add_argument('--atbash', metavar=('CIPHERTEXT'), type=str,
+                                help='use the Atbash cipher (affine cipher with a=25, b=25)', )
+    parser_decrypt.add_argument('--caesar', metavar=('CIPHERTEXT', 'SHIFT'), type=InputTypes.extract_str, nargs=2,
+                                help='use the Caesar cipher with given shift', )
+    parser_decrypt.add_argument('--vigenere', metavar=('CIPHERTEXT', 'KEY'), type=str, nargs=2,
+                                help='use the Vigenere cipher with given key')
+    parser_decrypt.add_argument('--rot13', metavar='CIPHERTEXT', type=str,
+                                help='use the ROT13 cipher (Caesar cipher with shift = 13)', )
+
     # parse arguments
     args = parser.parse_args()
 
     if not args.command:
         parser.parse_args(['--help'])
         sys.exit(0)
-
-    # procedure: decrypt
-    if args.command == 'decrypt':
-        if args.affine:
-            if not args.quiet:
-                print("Using Affine cipher")
-                if args.verbose:
-                    print('Verbose - nothing more to show')
-                print("Slope (a): %s, Intercept (b): %s" % (args.affine[1], args.affine[2]))
-                print('Ciphertext: %s\n' % args.affine[0])
-                print('Plaintext: %s' % affine_cipher_decrypter(args.affine[0], args.affine[1], args.affine[2]))
-            else:
-                print(affine_cipher_decrypter(args.affine[0], args.affine[1], args.affine[2]))
-        elif args.atbash:
-            if not args.quiet:
-                print("Using Atbash cipher")
-                if args.verbose:
-                    print('Verbose - nothing more to show')
-                print('Plaintext: %s\n\nCiphertext: %s' % (args.atbash, affine_cipher_encryptor(args.atbash, 25, 25)))
-
-            else:
-                print(affine_cipher_decrypter(args.atbash, 25, 25))
-        elif args.caesar:
-            if not args.quiet:
-                print("Using Caesar cipher")
-                if args.verbose:
-                    print('Verbose - nothing more to show')
-                print('Shift = %s: a → %s' % (args.caesar[1], caesar_cipher_encryptor('a', args.caesar[1])))
-                print('Ciphertext: %s\n' % args.caesar[0])
-                print('Plaintext: %s' % caesar_cipher_decrypter(args.caesar[0], args.caesar[1]))
-            else:
-                print(caesar_cipher_decrypter(args.caesar[0], args.caesar[1]))
-        elif args.rot13:
-            if not args.quiet:
-                print("Using ROT13 cipher")
-                if args.verbose:
-                    print('Verbose - nothing more to show')
-                print('Ciphertext: %s\n' % args.rot13)
-                print('Plaintext: %s' % caesar_cipher_decrypter(args.rot13, 13))
-            else:
-                print(caesar_cipher_decrypter(args.rot13, 13))
-        else:
-            parser.parse_args(['decrypt', '-h'])
-
     # procedure: encrypt
-    elif args.command == 'encrypt':
+    if args.command == 'encrypt':
         if args.affine:
             if not args.quiet:
                 print("Using Affine cipher")
@@ -342,9 +336,9 @@ def main():
                     print('Verbose - nothing more to show')
                 print('Key: %s' % args.vigenere[1])
                 print('Plaintext: %s\n' % args.vigenere[0])
-                print('Ciphertext: %s' % vigenere_cipher_encoder(args.vigenere[0], args.vigenere[1]))
+                print('Ciphertext: %s' % vigenere_cipher_encryptor(args.vigenere[0], args.vigenere[1]))
             else:
-                print(vigenere_cipher_encoder(args.vigenere[0], args.vigenere[1]))
+                print(vigenere_cipher_encryptor(args.vigenere[0], args.vigenere[1]))
         elif args.rail_fence:
             output = rail_fence_cipher_encryptor(args.rail_fence[0], args.rail_fence[1])
             cipher = output[0]
@@ -370,6 +364,59 @@ def main():
                 print(caesar_cipher_encryptor(args.rot13, 13))
         else:
             parser.parse_args(['encrypt', '-h'])
+
+    # procedure: decrypt
+    elif args.command == 'decrypt':
+        if args.affine:
+            if not args.quiet:
+                print("Using Affine cipher")
+                if args.verbose:
+                    print('Verbose - nothing more to show')
+                print("Slope (a): %s, Intercept (b): %s" % (args.affine[1], args.affine[2]))
+                print('Ciphertext: %s\n' % args.affine[0])
+                print('Plaintext: %s' % affine_cipher_decrypter(args.affine[0], args.affine[1], args.affine[2]))
+            else:
+                print(affine_cipher_decrypter(args.affine[0], args.affine[1], args.affine[2]))
+        elif args.atbash:
+            if not args.quiet:
+                print("Using Atbash cipher")
+                if args.verbose:
+                    print('Verbose - nothing more to show')
+                print('Plaintext: %s\n\nCiphertext: %s' % (args.atbash, affine_cipher_encryptor(args.atbash, 25, 25)))
+
+            else:
+                print(affine_cipher_decrypter(args.atbash, 25, 25))
+        elif args.caesar:
+            if not args.quiet:
+                print("Using Caesar cipher")
+                if args.verbose:
+                    print('Verbose - nothing more to show')
+                print('Shift = %s: a → %s' % (args.caesar[1], caesar_cipher_encryptor('a', args.caesar[1])))
+                print('Ciphertext: %s\n' % args.caesar[0])
+                print('Plaintext: %s' % caesar_cipher_decrypter(args.caesar[0], args.caesar[1]))
+            else:
+                print(caesar_cipher_decrypter(args.caesar[0], args.caesar[1]))
+        elif args.vigenere:
+            if not args.quiet:
+                print("Using Vigenere cipher")
+                if args.verbose:
+                    print('Verbose - nothing more to show')
+                print('Key: %s' % args.vigenere[1])
+                print('Ciphertext: %s\n' % args.vigenere[0])
+                print('Plaintext: %s' % vigenere_cipher_decrypter(args.vigenere[0], args.vigenere[1]))
+            else:
+                print(vigenere_cipher_decrypter(args.vigenere[0], args.vigenere[1]))
+        elif args.rot13:
+            if not args.quiet:
+                print("Using ROT13 cipher")
+                if args.verbose:
+                    print('Verbose - nothing more to show')
+                print('Ciphertext: %s\n' % args.rot13)
+                print('Plaintext: %s' % caesar_cipher_decrypter(args.rot13, 13))
+            else:
+                print(caesar_cipher_decrypter(args.rot13, 13))
+        else:
+            parser.parse_args(['decrypt', '-h'])
 
 
 if __name__ == '__main__':
