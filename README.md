@@ -6,9 +6,6 @@ Available ciphers:
 - Atbash cipher,
 - Caesar cipher,
 - Vigenere cipher,
-- Rail Fence cipher (encryptor only),
+- Rail Fence cipher,
 - ROT13 cipher.
 
-In progress:
-
-- Rail Fence cipher decrypter.

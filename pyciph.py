@@ -151,12 +151,11 @@ def caesar_cipher_decrypter(ciphertext, shift):
 
 def vigenere_cipher_encryptor(plaintext, key):
     # format the key
-    key = key.lower().strip()
-    # check, if key contains any char that IS NOT a letter. If so, break the process and return error
+    key = key.lower().strip().replace(' ', '')
+    # check, if key contains any char that IS NOT a letter. If so, break the process and raise error
     for x in range(len(key)):
         if ord(key[x]) not in ascii_char_range:
-            print("ERROR")
-            return None
+            raise Exception("ERROR - key contains forbidden character")
     ciphertext = []
     k = 0
     for x in range(len(plaintext)):
@@ -186,12 +185,11 @@ def vigenere_cipher_encryptor(plaintext, key):
 
 def vigenere_cipher_decrypter(ciphertext, key):
     # format the key
-    key = key.lower().strip()
-    # check, if key contains any char that IS NOT a letter. If so, break the process and return error
+    key = key.lower().strip().replace(' ', '')
+    # check, if key contains any char that IS NOT a letter. If so, break the process and raise error
     for x in range(len(key)):
         if ord(key[x]) not in ascii_char_range:
-            print("ERROR")
-            return None
+            raise Exception("ERROR - key contains forbidden character")
     plaintext = []
     k = 0
     for x in range(len(ciphertext)):
@@ -220,33 +218,87 @@ def vigenere_cipher_decrypter(ciphertext, key):
 
 
 def rail_fence_cipher_encryptor(plaintext, n):
-    plaintext = plaintext.lower()
     # create matrix where the plaintext will be placed
     matrix = [[' ' for x in range(len(plaintext))] for y in range(n)]
-    # start from row 1
-    row = 1
+    # start from row 0
+    row = 0
     decreasing = False
     for x in range(len(plaintext)):
+        if plaintext[x].isupper():
+            pass
         # check if the char is A-Z letter
-        if ord(plaintext[x]) not in ascii_char_range:
+        elif ord(plaintext[x]) not in ascii_char_range:
             continue
         # perform char placement - when last row is meet, decrease the row from last to the first
         # algorithm creates so called 'rail fence'
         if not decreasing:
-            matrix[row-1][x] = plaintext[x]
+            matrix[row][x] = plaintext[x]
             row += 1
-            if row == n:
+            if row == n-1:
                 decreasing = True
         else:
-            matrix[row-1][x] = plaintext[x]
+            matrix[row][x] = plaintext[x]
             row -= 1
-            if row == 1:
+            if row == 0:
                 decreasing = False
     ciphertext = []
     # join the cipher row by row
     for row in range(len(matrix)):
         ciphertext.append(''.join(matrix[row]))
-    return [''.join(ciphertext).replace(' ', '').upper(), matrix]
+    return [''.join(ciphertext).replace(' ', ''), matrix]
+
+
+def rail_fence_cipher_decrypter(ciphertext, n):
+    # format the ciphertext
+    ciphertext = ciphertext.replace(' ', '')
+    # check, if cipher contains any char that IS NOT a letter. If so, break the process and raise error
+    for x in range(len(ciphertext)):
+        if ciphertext[x].isupper():
+            continue
+        elif ord(ciphertext[x]) not in ascii_char_range:
+            raise Exception("ERROR - cipher contains forbidden character")
+    # create matrix where the plaintext will be placed
+    matrix = [[' ' for x in range(len(ciphertext))] for y in range(n)]
+    # start from row 0
+    row = 0
+    decreasing = False
+    # perform asterisks placement - when last row is meet, decrease the row from last to the first
+    # algorithm creates so called 'rail fence'
+    for x in range(len(ciphertext)):
+        if not decreasing:
+            matrix[row][x] = '*'
+            row += 1
+            if row == n-1:
+                decreasing = True
+        else:
+            matrix[row][x] = '*'
+            row -= 1
+            if row == 0:
+                decreasing = False
+    # iterate through the ciphertext and append characters in the right position replacing the correct asterisk
+    index = 0
+    for x in range(n):
+        for y in range(len(ciphertext)):
+            if matrix[x][y] == '*':
+                matrix[x][y] = ciphertext[index]
+                index += 1
+    row = 0
+    decreasing = False
+    plaintext = []
+    # iterate through the matrix and read the plaintext
+    for x in range(len(ciphertext)):
+        if not decreasing:
+            plaintext.append(matrix[row][x])
+            row += 1
+            if row == n-1:
+                decreasing = True
+        else:
+            plaintext.append(matrix[row][x])
+            row -= 1
+            if row == 0:
+                decreasing = False
+
+    return [''.join(plaintext).replace(' ', ''), matrix]
 
 
 class InputTypes:
@@ -289,6 +341,8 @@ def main():
                                 help='use the Caesar cipher with given shift', )
     parser_decrypt.add_argument('--vigenere', metavar=('CIPHERTEXT', 'KEY'), type=str, nargs=2,
                                 help='use the Vigenere cipher with given key')
+    parser_decrypt.add_argument('--rail-fence', metavar=('CIPHERTEXT', 'n'), type=InputTypes.extract_str, nargs=2,
+                                help='use Rail Fence cipher with given height of the matrix')
     parser_decrypt.add_argument('--rot13', metavar='CIPHERTEXT', type=str,
                                 help='use the ROT13 cipher (Caesar cipher with shift = 13)', )
 
@@ -330,15 +384,21 @@ def main():
             else:
                 print(caesar_cipher_encryptor(args.caesar[0], args.caesar[1]))
         elif args.vigenere:
-            if not args.quiet:
-                print('Using Vigenere cipher')
-                if args.verbose:
-                    print('Verbose - nothing more to show')
-                print('Key: %s' % args.vigenere[1])
-                print('Plaintext: %s\n' % args.vigenere[0])
-                print('Ciphertext: %s' % vigenere_cipher_encryptor(args.vigenere[0], args.vigenere[1]))
+            try:
+                output = vigenere_cipher_encryptor(args.vigenere[0], args.vigenere[1])
+            except Exception as e:
+                error_message = e
+                print(error_message)
             else:
-                print(vigenere_cipher_encryptor(args.vigenere[0], args.vigenere[1]))
+                if not args.quiet:
+                    print('Using Vigenere cipher')
+                    if args.verbose:
+                        print('Verbose - nothing more to show')
+                    print('Key: %s' % args.vigenere[1])
+                    print('Plaintext: %s\n' % args.vigenere[0])
+                    print('Ciphertext: %s' % output)
+                else:
+                    print(output)
         elif args.rail_fence:
             output = rail_fence_cipher_encryptor(args.rail_fence[0], args.rail_fence[1])
             cipher = output[0]
@@ -397,15 +457,41 @@ def main():
             else:
                 print(caesar_cipher_decrypter(args.caesar[0], args.caesar[1]))
         elif args.vigenere:
-            if not args.quiet:
-                print("Using Vigenere cipher")
-                if args.verbose:
-                    print('Verbose - nothing more to show')
-                print('Key: %s' % args.vigenere[1])
-                print('Ciphertext: %s\n' % args.vigenere[0])
-                print('Plaintext: %s' % vigenere_cipher_decrypter(args.vigenere[0], args.vigenere[1]))
+            try:
+                output = vigenere_cipher_decrypter(args.vigenere[0], args.vigenere[1])
+            except Exception as e:
+                error_message = e
+                print(error_message)
             else:
-                print(vigenere_cipher_decrypter(args.vigenere[0], args.vigenere[1]))
+                if not args.quiet:
+                    print("Using Vigenere cipher")
+                    if args.verbose:
+                        print('Verbose - nothing more to show')
+                    print('Key: %s' % args.vigenere[1])
+                    print('Ciphertext: %s\n' % args.vigenere[0])
+                    print('Plaintext: %s' % output)
+                else:
+                    print(output)
+        elif args.rail_fence:
+            try:
+                output = rail_fence_cipher_decrypter(args.rail_fence[0], args.rail_fence[1])
+            except Exception as e:
+                error_message = e
+                print(error_message)
+            else:
+                plaintext = output[0]
+                matrix = output[1]
+                if not args.quiet:
+                    print('Key = %s' % args.rail_fence[1])
+                    print('Ciphertext: %s' % args.rail_fence[0])
+                    if args.verbose:
+                        print('Matrix: ')
+                        for x in range(len(matrix)):
+                            print(matrix[x])
+                    print('\nPlaintext: %s' % plaintext)
+                else:
+                    print(plaintext)
+
         elif args.rot13:
             if not args.quiet:
                 print("Using ROT13 cipher")
@@ -423,5 +509,4 @@ if __name__ == '__main__':
     main()
 
 # TODO
-# - vigenere cipher decrypter
-# - rail fence cipher decrypter
+
